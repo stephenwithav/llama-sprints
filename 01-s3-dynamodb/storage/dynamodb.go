@@ -37,6 +37,14 @@ func (db *DynamoDB) NewContainer(ctx context.Context, tableName string) error {
 	return err
 }
 
+func (db *DynamoDB) RemoveContainer(ctx context.Context, name string) error {
+	_, err := db.svc.DeleteTable(context.Background(), &dynamodb.DeleteTableInput{
+		TableName: aws.String(name),
+	})
+
+	return err
+}
+
 func (db *DynamoDB) PutObject(ctx context.Context, key string, data []byte) error {
 	_, err := db.svc.PutItem(context.Background(), &dynamodb.PutItemInput{
 		TableName: &db.tableName,

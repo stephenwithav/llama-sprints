@@ -7,4 +7,5 @@ type Repository interface {
 	PutObject(ctx context.Context, key string, data []byte) error
 	Delete(ctx context.Context, key string) error
 	NewContainer(ctx context.Context, name string) error
+	RemoveContainer(ctx context.Context, name string) error
 }

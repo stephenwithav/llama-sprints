@@ -34,6 +34,14 @@ func (db *S3) NewContainer(ctx context.Context, name string) error {
 	return err
 }
 
+func (db *S3) RemoveContainer(ctx context.Context, name string) error {
+	_, err := db.svc.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		Bucket: aws.String(name),
+	})
+
+	return err
+}
+
 func (db *S3) PutObject(ctx context.Context, key string, data []byte) error {
 	_, err := db.svc.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: &db.bucketName,
