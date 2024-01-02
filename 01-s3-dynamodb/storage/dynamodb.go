@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type DynamoDB struct {
@@ -24,13 +25,37 @@ func NewDynamoDB(cfg aws.Config, opts DynamoDBOptions) Repository {
 }
 
 func (db *DynamoDB) PutObject(ctx context.Context, key string, data []byte) error {
-	return nil
+	_, err := db.svc.PutItem(context.Background(), &dynamodb.PutItemInput{
+		TableName: &db.tableName,
+		Item: map[string]types.AttributeValue{
+			"id":   &types.AttributeValueMemberS{Value: key},
+			"data": &types.AttributeValueMemberB{Value: data},
+		},
+	})
+	return err
 }
 
 func (db *DynamoDB) Get(ctx context.Context, key string) ([]byte, error) {
-	return nil, nil
+	resp, err := db.svc.GetItem(context.Background(), &dynamodb.GetItemInput{
+		TableName: &db.tableName,
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: key},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Item["data"].(*types.AttributeValueMemberB).Value, nil
 }
 
 func (db *DynamoDB) Delete(ctx context.Context, key string) error {
-	return nil
+	_, err := db.svc.DeleteItem(context.Background(), &dynamodb.DeleteItemInput{
+		TableName: &db.tableName,
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: key},
+		},
+	})
+
+	return err
 }
