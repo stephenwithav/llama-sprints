@@ -25,6 +25,15 @@ func NewS3(cfg aws.Config, opts S3Options) Repository {
 	}
 }
 
+func (db *S3) NewContainer(ctx context.Context, name string) error {
+	_, err := db.svc.CreateBucket(ctx, &s3.CreateBucketInput{
+		Bucket: aws.String(name),
+	})
+	db.bucketName = name
+
+	return err
+}
+
 func (db *S3) PutObject(ctx context.Context, key string, data []byte) error {
 	_, err := db.svc.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: &db.bucketName,

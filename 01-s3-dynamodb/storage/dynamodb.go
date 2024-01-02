@@ -24,6 +24,19 @@ func NewDynamoDB(cfg aws.Config, opts DynamoDBOptions) Repository {
 	}
 }
 
+func (db *DynamoDB) NewContainer(ctx context.Context, tableName string) error {
+	// Sample: https://github.com/aws/aws-sdk-go-v2/blob/main/example/service/dynamodb/createTable/createTable.go
+	params := &dynamodb.CreateTableInput{
+		AttributeDefinitions:  []types.AttributeDefinition{},
+		KeySchema:             []types.KeySchemaElement{},
+		ProvisionedThroughput: &types.ProvisionedThroughput{},
+		TableName:             aws.String(tableName),
+	}
+	db.tableName = tableName
+	_, err := db.svc.CreateTable(context.Background(), params)
+	return err
+}
+
 func (db *DynamoDB) PutObject(ctx context.Context, key string, data []byte) error {
 	_, err := db.svc.PutItem(context.Background(), &dynamodb.PutItemInput{
 		TableName: &db.tableName,
