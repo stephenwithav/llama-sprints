@@ -33,6 +33,7 @@ func NewDynamoDB(cfg aws.Config, opts *DynamoDBOptions) Client {
 	}
 }
 
+// NewContainer creates a new table in your AWS account using the provided configuration parameters from DynamoDBOptions.
 func (db *DynamoDB) NewContainer(ctx context.Context, tableName string) (Storer, error) {
 	params := &dynamodb.CreateTableInput{
 		AttributeDefinitions:  db.opts.AttributeDefinitions,
@@ -40,7 +41,7 @@ func (db *DynamoDB) NewContainer(ctx context.Context, tableName string) (Storer,
 		ProvisionedThroughput: db.opts.ProvisionedThroughput,
 		TableName:             &tableName,
 	}
-	createTableOutput, err := db.svc.CreateTable(context.Background(), params)
+	createTableOutput, err := db.svc.CreateTable(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +51,7 @@ func (db *DynamoDB) NewContainer(ctx context.Context, tableName string) (Storer,
 	}, nil
 }
 
+// ListContainersreturns a list of all available tables (containers).
 func (db *DynamoDB) ListContainers(ctx context.Context) ([]string, error) {
 	tables, err := db.svc.ListTables(ctx, &dynamodb.ListTablesInput{})
 	if err != nil {
@@ -59,14 +61,16 @@ func (db *DynamoDB) ListContainers(ctx context.Context) ([]string, error) {
 	return tables.TableNames, nil
 }
 
+// RemoveContainer deletes an existing table (container) by its name.
 func (db *DynamoDB) RemoveContainer(ctx context.Context, name string) error {
-	_, err := db.svc.DeleteTable(context.Background(), &dynamodb.DeleteTableInput{
+	_, err := db.svc.DeleteTable(ctx, &dynamodb.DeleteTableInput{
 		TableName: aws.String(name),
 	})
 
 	return err
 }
 
+// ChooseContainer creates and returns a new Storer instance with the provided tableName.
 func (db *DynamoDB) ChooseContainer(ctx context.Context, tableName string) (Storer, error) {
 	return &dynamoDbStorer{
 		svc:       db.svc,
@@ -74,8 +78,11 @@ func (db *DynamoDB) ChooseContainer(ctx context.Context, tableName string) (Stor
 	}, nil
 }
 
+// Put is a method to insert (or update if existing) an item into DynamoDB table.
+// It takes in a context object, a key string and data byte array as arguments.
+// The key-value pair is stored in 'id' attribute and the raw bytes in 'data'.
 func (db *dynamoDbStorer) Put(ctx context.Context, key string, data []byte) error {
-	_, err := db.svc.PutItem(context.Background(), &dynamodb.PutItemInput{
+	_, err := db.svc.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: db.tableName,
 		Item: map[string]types.AttributeValue{
 			"id":   &types.AttributeValueMemberS{Value: key},
@@ -85,8 +92,10 @@ func (db *dynamoDbStorer) Put(ctx context.Context, key string, data []byte) erro
 	return err
 }
 
+// Get is a method to retrieve an item from DynamoDB table by key.
+// It takes in a context object and a key string as arguments.
 func (db *dynamoDbStorer) Get(ctx context.Context, key string) ([]byte, error) {
-	resp, err := db.svc.GetItem(context.Background(), &dynamodb.GetItemInput{
+	resp, err := db.svc.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: db.tableName,
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{Value: key},
@@ -99,8 +108,9 @@ func (db *dynamoDbStorer) Get(ctx context.Context, key string) ([]byte, error) {
 	return resp.Item["data"].(*types.AttributeValueMemberB).Value, nil
 }
 
+// Delete is a method that deletes an item from DynamoDB table by key.
 func (db *dynamoDbStorer) Delete(ctx context.Context, key string) error {
-	_, err := db.svc.DeleteItem(context.Background(), &dynamodb.DeleteItemInput{
+	_, err := db.svc.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: db.tableName,
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{Value: key},
